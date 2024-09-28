@@ -1,0 +1,189 @@
+import  os
+import stdiomask
+import datetime
+import mysql.connector as sqltor
+db=sqltor.connect(user='root',password='vivek',database='billing')
+cursor=db.cursor()
+
+def create():
+       cursor.execute('''CREATE TABLE IF NOT EXISTS STORE
+       (pincode int(5) Primary Key,
+       productName varchar(20),
+       quantity int(6),
+       rate int(10));''')
+
+
+def insert():
+       cursor.execute('''INSERT INTO STORE VALUES (1,'rice',500,800);''')
+       cursor.execute('''INSERT INTO STORE VALUES (2,'soap',20,24);''')
+       cursor.execute('''INSERT INTO STORE VALUES (3,'wheat',300,500);''')
+       cursor.execute('''INSERT INTO STORE VALUES (4,'sugar',450,700);''')
+       cursor.execute('''INSERT INTO STORE VALUES (5,'salt',350,600);''')
+       db.commit()
+def display():
+       cursor.execute('''select*from store order by pincode''')
+       row = cursor.fetchall()
+       print("-"*50)
+       print("pincode\tproductname\tquantity\trate")
+       print("-"*50)
+       for c in row:
+              print(c[0],'\t',c[1],'\t\t',c[2],'\t\t',c[3])
+       print("-"*50)
+       input()     
+
+def update_stock():
+    try:
+        upcode=int(input("Enter the product code for updating:"))
+        uquantity=int(input("Enter the product quantity for updating:"))
+        cursor.execute('''update store set quantity=quantity+%s where pincode=%s''',(uquantity,upcode))
+        print("record updated successfully")
+        input()
+    except EOFError :
+        print("error")
+        db.rollback()
+        return
+    db.commit()
+    
+def update_price():
+    upcode=int(input("Enter the product code for updating:"))
+    uprice=int(input("Enter the product price for updating:"))
+    cursor.execute('''update store set rate=%s where pincode=%s''',(uprice,upcode))
+    print("record updated successfully")
+    input()
+    db.commit()
+
+def delete_stock():
+    dpcode=int(input("Enter the product code for deleting:"))
+    cursor.execute('''delete from store where pincode=%s''',(dpcode,))
+    print("record deleted successfully")
+    input()
+    db.commit()
+   
+def insert_stock():
+       try:
+              a=int(input('Enter pincode '))
+              b=input('Enter productname : ')
+              c=int(input('Enter quantity :'))
+              d=int(input('Enter rate : '))
+              cursor.execute('''INSERT INTO STORE VALUES (%s,%s,%s,%s)''',(a,b,c,d))
+       except :
+              print("error")
+              db.rollback()
+              return
+       db.commit()
+       
+def store_menu():
+    while(1):
+        os.system("cls")
+        print('''
+    1.Creating a new stock
+    2.Updating stock
+    3.Updating price
+    4.Deleting stock
+    5.Display stocks
+    6.Exit
+       ''')
+        ch=int(input("Enter the choice:"))
+        if (ch==1):
+            os.system('cls')
+            insert_stock()
+        elif ch==2:
+            os.system("cls")
+            update_stock()
+        elif ch==3:
+            os.system("cls")
+            update_price() 
+        elif ch==4:
+            os.system("cls")
+            delete_stock() 
+        elif ch==5:
+            os.system("cls")
+            display()
+        elif ch==6:
+            os.system("cls")
+            break
+        else:
+            os.system("cls")
+            print('invalid input')        
+    db.close()
+    
+ 
+def check(pcode):
+    cursor.execute('''select pincode,productname,quantity,rate from store where pincode=%s''',(pcode,))
+    r=cursor.fetchone()
+    return r
+
+
+def billing():
+     amount=0
+     l=[]
+     a=int(input('Enter s_no :'))
+     customer_name=(input("enter your name:"))
+     phoneno=int(input("enter the customer-phoneno:")) 
+     ch='y'
+     display()
+     q=1
+     while(ch=='y'):
+         pincode=int(input("Enter the pincode of object which you want to buy:"))
+         x=check(pincode)
+         x=list(x)
+         print(x)
+         qty=int(input("Enter the quantity of purchase:"))
+         x[2]=qty
+         rate=x[3]
+         cursor.execute('''update store set quantity=quantity-%s where pincode=%s''',(qty,pincode))
+         db.commit()
+         amount=amount+qty*rate
+         l.append(x)
+         ch=input("Are you going to continue(y/n):")
+         print("")
+     os.system('cls')
+     now=datetime.datetime.now()
+     date=now.strftime("%y-%m-%d")
+     time=now.strftime("%H-%M-%S")
+     print('\n\n','*'*50)
+     print('             TS Super Market\n','*'*50)
+     print("\n\nRecipt\n\nDate :",date,"\nTime:",time)
+     print("\n-----------------------------------------------")
+     print("Icode\tProduct\tQuantity\tRate\tAmount")
+     print("\n-----------------------------------------------")
+     for j in l:           
+         print(j[0],'\t',j[1],'\t',j[2],'\t\t',j[3],'\t',j[2]*j[3])
+     print("\n-----------------------------------------------")
+     print("\nTotal Bill\t\t amount",amount)
+     print("\n-----------------------------------------------")
+     
+
+         
+#main program
+print("*"*70)
+print("             TS  SUPER MARKET         ")
+print("*"*70)
+print("\n  ------------")
+print("   WELCOME ")
+print("  ------------")
+
+while(1):
+       print('''
+         ---------
+            MENU
+         ---------
+     1.Editing stock
+     2.purchase
+     3.Exit''')
+       ch=int(input("Enter your choice:"))
+       if ch==1:
+           a=stdiomask.getpass('Enter the password:')
+           if a=='ad123':
+               os.system('cls')
+               store_menu()
+           else:
+               print("wrong password")
+               os.system("cls")  
+       elif ch==2:
+           os.system("cls")  
+           billing()
+       elif ch==3:
+              break
+       else:
+              print("invaild input")
